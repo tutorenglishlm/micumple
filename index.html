@@ -209,6 +209,39 @@
   .garden{position:fixed;bottom:0;left:0;width:100%;z-index:1;pointer-events:none;line-height:0}
   .garden svg{width:100%;height:auto;display:block}
 
+  /* ---- RSVP ---- */
+  .cta{
+    display:inline-flex;align-items:center;gap:8px;margin-top:22px;
+    border:none;cursor:pointer;
+    background:linear-gradient(180deg,var(--rose),var(--rose-deep));
+    color:#fff;font-family:"Cormorant Garamond",serif;font-weight:600;
+    font-size:20px;letter-spacing:.03em;
+    padding:15px 32px;border-radius:40px;
+    box-shadow:0 12px 24px rgba(216,79,140,.3);
+    transition:transform .18s;
+  }
+  .cta:active{transform:scale(.96)}
+  .frame.rsvp{max-width:390px;text-align:center;padding:28px 24px 24px}
+  .frame.rsvp h3{font-size:36px;margin:0 0 2px}
+  .frame.rsvp .sub{color:var(--rose-deep);opacity:.75;font-size:18px;margin-bottom:16px}
+  .field{display:block;width:100%;margin:9px 0;padding:14px 16px;border-radius:14px;
+    border:2px solid #f3c3d6;background:#fff8fb;color:var(--rose-deep);
+    font-family:"Cormorant Garamond",serif;font-weight:600;font-size:18px;outline:none}
+  .field:focus{border-color:var(--rose)}
+  .field::placeholder{color:#d9a7bd;font-weight:500}
+  .rsvp-opts{display:flex;flex-direction:column;gap:11px;margin-top:16px}
+  .opt{border:none;cursor:pointer;padding:16px;border-radius:16px;
+    font-family:"Cormorant Garamond",serif;font-weight:600;font-size:20px;color:#fff;
+    transition:transform .15s}
+  .opt:active{transform:scale(.97)}
+  .opt.yes{background:linear-gradient(180deg,#7bc77b,#56a356);box-shadow:0 8px 18px rgba(86,163,86,.32)}
+  .opt.no{background:linear-gradient(180deg,#e59ab4,#cf7d9b);box-shadow:0 8px 18px rgba(207,125,155,.3)}
+  .count-row{display:flex;gap:11px;margin-top:4px}
+  .count-box{flex:1;text-align:left}
+  .count-box label{display:block;font-size:15px;color:var(--rose-deep);opacity:.78;margin:4px 2px;font-weight:600}
+  .count-box .field{margin:0;text-align:center}
+  .err{color:#d94f8c;font-size:15px;min-height:20px;margin-top:8px;font-weight:600}
+
   @media(min-width:500px){.name{font-size:84px}}
 </style>
 </head>
@@ -249,6 +282,8 @@
   </div>
 
   <div class="tap-hint" id="hint">💌 Toca el sobre para abrir</div>
+
+  <button class="cta" id="rsvpBtn">💌 Confirmar asistencia</button>
 </div>
 
 <!-- Video modal -->
@@ -260,6 +295,32 @@
       <source src="assets/video.mp4" type="video/mp4" />
     </video>
     <button class="replay" id="replay">Ver de nuevo ↺</button>
+    <button class="cta" id="rsvpBtn2" style="margin-top:12px;font-size:17px;padding:12px 26px">💌 Confirmar asistencia</button>
+  </div>
+</div>
+
+<!-- RSVP modal -->
+<div class="modal" id="rsvp">
+  <div class="frame rsvp">
+    <button class="close" id="rsvpClose" aria-label="Cerrar">×</button>
+    <h3>¿Nos acompañas?</h3>
+    <div class="sub">Confírmanos tu asistencia 🎀</div>
+    <input class="field" id="rName" type="text" placeholder="Tu nombre" autocomplete="name" />
+    <div class="count-row">
+      <div class="count-box">
+        <label for="rAdults">👩 Adultos</label>
+        <input class="field" id="rAdults" type="number" min="0" value="1" inputmode="numeric" />
+      </div>
+      <div class="count-box">
+        <label for="rKids">🧒 Niños</label>
+        <input class="field" id="rKids" type="number" min="0" value="0" inputmode="numeric" />
+      </div>
+    </div>
+    <div class="rsvp-opts">
+      <button class="opt yes" data-go="yes">Sí, ahí estaré 💚</button>
+      <button class="opt no" data-go="no">No podré asistir 💔</button>
+    </div>
+    <div class="err" id="rErr"></div>
   </div>
 </div>
 
@@ -325,6 +386,53 @@
   document.getElementById('close').addEventListener('click',closeModal);
   document.getElementById('replay').addEventListener('click',()=>{vid.currentTime=0;vid.play();});
   modal.addEventListener('click',e=>{if(e.target===modal)closeModal();});
+
+  /* ---- RSVP por WhatsApp ---- */
+  const HOST_WA = "5216613362562"; // << WhatsApp de la familia de Emilia (verificar)
+  const rsvp=document.getElementById('rsvp');
+  function openRsvp(){
+    closeModal();
+    rsvp.classList.add('show');
+    setTimeout(()=>document.getElementById('rName').focus(),350);
+  }
+  function closeRsvp(){rsvp.classList.remove('show');}
+  document.getElementById('rsvpBtn').addEventListener('click',openRsvp);
+  const rb2=document.getElementById('rsvpBtn2'); if(rb2) rb2.addEventListener('click',openRsvp);
+  document.getElementById('rsvpClose').addEventListener('click',closeRsvp);
+  rsvp.addEventListener('click',e=>{if(e.target===rsvp)closeRsvp();});
+
+  if(location.hash==='#rsvp') openRsvp();
+  rsvp.querySelectorAll('.opt').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const name=document.getElementById('rName').value.trim();
+      const err=document.getElementById('rErr');
+      if(!name){
+        err.textContent='Por favor escribe tu nombre 💕';
+        document.getElementById('rName').focus();
+        return;
+      }
+      err.textContent='';
+      let msg;
+      if(btn.dataset.go==='yes'){
+        const ad=Math.max(0,parseInt(document.getElementById('rAdults').value,10)||0);
+        const ki=Math.max(0,parseInt(document.getElementById('rKids').value,10)||0);
+        if(ad+ki===0){
+          err.textContent='¿Cuántos asistirán? 💕';
+          return;
+        }
+        const total=ad+ki;
+        msg=`¡Hola! 🎀 Confirmo mi asistencia al cumpleaños de Emilia (3 años).\n\n`+
+            `👤 Nombre: ${name}\n`+
+            `👩 Adultos: ${ad}\n`+
+            `🧒 Niños: ${ki}\n`+
+            `👥 Total: ${total}\n\n`+
+            `¡Ahí estaremos! 💕`;
+      }else{
+        msg=`¡Hola! 💕 Soy ${name}. Lamento mucho no poder asistir al cumpleaños de Emilia, pero le mando un fuerte abrazo. 🎀`;
+      }
+      window.location.href=`https://wa.me/${HOST_WA}?text=${encodeURIComponent(msg)}`;
+    });
+  });
 
   // confetti burst on open
   function burst(){
