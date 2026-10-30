@@ -282,8 +282,6 @@
   </div>
 
   <div class="tap-hint" id="hint">💌 Toca el sobre para abrir</div>
-
-  <button class="cta" id="rsvpBtn">💌 Confirmar asistencia</button>
 </div>
 
 <!-- Video modal -->
@@ -396,7 +394,6 @@
     setTimeout(()=>document.getElementById('rName').focus(),350);
   }
   function closeRsvp(){rsvp.classList.remove('show');}
-  document.getElementById('rsvpBtn').addEventListener('click',openRsvp);
   const rb2=document.getElementById('rsvpBtn2'); if(rb2) rb2.addEventListener('click',openRsvp);
   document.getElementById('rsvpClose').addEventListener('click',closeRsvp);
   rsvp.addEventListener('click',e=>{if(e.target===rsvp)closeRsvp();});
