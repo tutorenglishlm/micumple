@@ -182,18 +182,29 @@
   }
   .modal.show{opacity:1;pointer-events:auto}
   .frame{
-    position:relative;width:100%;max-width:430px;
+    position:relative;width:100%;max-width:430px;max-height:94vh;
     background:linear-gradient(180deg,#fff,#ffeef6);
-    border-radius:22px;padding:14px 14px 18px;
+    border-radius:22px;padding:14px 14px 16px;
     box-shadow:0 30px 70px rgba(120,30,70,.5);
     transform:scale(.88) translateY(14px);transition:transform .5s cubic-bezier(.22,1,.36,1);
+    display:flex;flex-direction:column;
   }
   .modal.show .frame{transform:scale(1) translateY(0)}
   .frame h3{
     font-family:"Great Vibes",cursive;color:var(--rose);
-    font-size:30px;text-align:center;margin:2px 0 10px;font-weight:400;
+    font-size:28px;text-align:center;margin:0 0 8px;font-weight:400;flex:none;
   }
-  video{width:100%;border-radius:14px;display:block;background:#000}
+  .videowrap{position:relative;flex:1;min-height:0;display:flex;justify-content:center}
+  video{width:100%;height:auto;max-height:78vh;border-radius:14px;display:block;background:#000;object-fit:contain}
+  /* pop-up shown when the video ends */
+  .ended{
+    position:absolute;inset:0;border-radius:14px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;
+    background:linear-gradient(0deg,rgba(120,30,70,.78),rgba(120,30,70,.55));
+    opacity:0;pointer-events:none;transition:opacity .45s;
+  }
+  .ended.show{opacity:1;pointer-events:auto}
+  .ended .cta{margin-top:0}
   .close{
     position:absolute;top:-14px;right:-14px;width:40px;height:40px;border:none;
     border-radius:50%;background:var(--rose);color:#fff;font-size:22px;cursor:pointer;
@@ -289,11 +300,15 @@
   <div class="frame">
     <button class="close" id="close" aria-label="Cerrar">×</button>
     <h3>Con mucho cariño 💕</h3>
-    <video id="vid" controls playsinline preload="metadata" poster="assets/preview.png">
-      <source src="assets/video.mp4" type="video/mp4" />
-    </video>
-    <button class="replay" id="replay">Ver de nuevo ↺</button>
-    <button class="cta" id="rsvpBtn2" style="margin-top:12px;font-size:17px;padding:12px 26px">💌 Confirmar asistencia</button>
+    <div class="videowrap">
+      <video id="vid" controls playsinline preload="metadata" poster="assets/preview.png">
+        <source src="assets/video.mp4" type="video/mp4" />
+      </video>
+      <div class="ended" id="ended">
+        <button class="cta" id="rsvpBtn2">💌 Confirmar asistencia</button>
+        <button class="replay" id="replay">Ver de nuevo ↺</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -372,6 +387,7 @@
   }
   function openModal(){
     modal.classList.add('show');
+    document.getElementById('ended').classList.remove('show');
     vid.currentTime=0;
     const p=vid.play(); if(p&&p.catch)p.catch(()=>{});
   }
@@ -380,9 +396,13 @@
     vid.pause();
   }
 
+  const ended=document.getElementById('ended');
+  vid.addEventListener('ended',()=>ended.classList.add('show'));
+  vid.addEventListener('play',()=>ended.classList.remove('show'));
+
   stage.addEventListener('click',openInvite);
   document.getElementById('close').addEventListener('click',closeModal);
-  document.getElementById('replay').addEventListener('click',()=>{vid.currentTime=0;vid.play();});
+  document.getElementById('replay').addEventListener('click',()=>{ended.classList.remove('show');vid.currentTime=0;vid.play();});
   modal.addEventListener('click',e=>{if(e.target===modal)closeModal();});
 
   /* ---- RSVP por WhatsApp ---- */
